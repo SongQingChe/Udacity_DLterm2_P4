@@ -12,7 +12,7 @@
 # 
 # 如果你在使用 [FloydHub](https://www.floydhub.com/), 请将 `data_dir` 设置为 "/input" 并使用 [FloydHub data ID](http://docs.floydhub.com/home/using_datasets/) "R5KrjnANiKVhLWAkpXhNBe".
 
-# In[101]:
+# In[1]:
 
 
 data_dir = './data'
@@ -34,7 +34,7 @@ helper.download_extract('celeba', data_dir)
 # ### MNIST
 # [MNIST](http://yann.lecun.com/exdb/mnist/) 是一个手写数字的图像数据集。你可以更改 `show_n_images` 探索此数据集。
 
-# In[102]:
+# In[2]:
 
 
 show_n_images = 25
@@ -54,7 +54,7 @@ pyplot.imshow(helper.images_square_grid(mnist_images, 'L'), cmap='gray')
 # ### CelebA
 # [CelebFaces Attributes Dataset (CelebA)](http://mmlab.ie.cuhk.edu.hk/projects/CelebA.html) 是一个包含 20 多万张名人图片及相关图片说明的数据集。你将用此数据集生成人脸，不会用不到相关说明。你可以更改 `show_n_images` 探索此数据集。
 
-# In[103]:
+# In[3]:
 
 
 show_n_images = 25
@@ -85,7 +85,7 @@ pyplot.imshow(helper.images_square_grid(mnist_images, 'RGB'))
 # ### 检查 TensorFlow 版本并获取 GPU 型号
 # 检查你是否使用正确的 TensorFlow 版本，并获取 GPU 型号
 
-# In[104]:
+# In[4]:
 
 
 """
@@ -115,7 +115,7 @@ else:
 # 返回占位符元组的形状为 (tensor of real input images, tensor of z data, learning rate)。
 # 
 
-# In[105]:
+# In[5]:
 
 
 import problem_unittests as tests
@@ -147,7 +147,7 @@ tests.test_model_inputs(model_inputs)
 # 
 # 该函数应返回形如 (tensor output of the discriminator, tensor logits of the discriminator) 的元组。
 
-# In[176]:
+# In[6]:
 
 
 def discriminator(images, reuse=False):
@@ -193,7 +193,7 @@ tests.test_discriminator(discriminator, tf)
 # 
 # 该函数应返回所生成的 28 x 28 x `out_channel_dim` 维度图像。
 
-# In[178]:
+# In[7]:
 
 
 def generator(z, out_channel_dim, is_train=True):
@@ -240,7 +240,7 @@ tests.test_generator(generator, tf)
 # - `discriminator(images, reuse=False)`
 # - `generator(z, out_channel_dim, is_train=True)`
 
-# In[122]:
+# In[8]:
 
 
 def model_loss(input_real, input_z, out_channel_dim):
@@ -276,7 +276,7 @@ tests.test_model_loss(model_loss)
 # ### 优化（Optimization）
 # 部署 `model_opt` 函数实现对 GANs 的优化。使用 [`tf.trainable_variables`](https://www.tensorflow.org/api_docs/python/tf/trainable_variables) 获取可训练的所有变量。通过变量空间名 `discriminator` 和 `generator` 来过滤变量。该函数应返回形如 (discriminator training operation, generator training operation) 的元组。
 
-# In[123]:
+# In[9]:
 
 
 def model_opt(d_loss, g_loss, learning_rate, beta1):
@@ -293,8 +293,9 @@ def model_opt(d_loss, g_loss, learning_rate, beta1):
     g_vars = [var for var in t_vars if var.name.startswith('generator')]
     d_vars = [var for var in t_vars if var.name.startswith('discriminator')]
     
-    d_train_opt = tf.train.AdamOptimizer(learning_rate=learning_rate, beta1=beta1).minimize(d_loss, var_list=d_vars)
-    g_train_opt = tf.train.AdamOptimizer(learning_rate=learning_rate, beta1=beta1).minimize(g_loss, var_list=g_vars)
+    with tf.control_dependencies(tf.get_collection(tf.GraphKeys.UPDATE_OPS)):
+        d_train_opt = tf.train.AdamOptimizer(learning_rate=learning_rate, beta1=beta1).minimize(d_loss, var_list=d_vars)
+        g_train_opt = tf.train.AdamOptimizer(learning_rate=learning_rate, beta1=beta1).minimize(g_loss, var_list=g_vars)
     return d_train_opt, g_train_opt
 
 
@@ -308,7 +309,7 @@ tests.test_model_opt(model_opt, tf)
 # ### 输出显示
 # 使用该函数可以显示生成器 (Generator) 在训练过程中的当前输出，这会帮你评估 GANs 模型的训练程度。
 
-# In[124]:
+# In[10]:
 
 
 """
@@ -348,7 +349,7 @@ def show_generator_output(sess, n_images, input_z, out_channel_dim, image_mode):
 # 
 # **注意**：在每个批次 (batch) 中运行 `show_generator_output` 函数会显著增加训练时间与该 notebook 的体积。推荐每 100 批次输出一次 `generator` 的输出。 
 
-# In[125]:
+# In[11]:
 
 
 def train(epoch_count, batch_size, z_dim, learning_rate, beta1, get_batches, data_shape, data_image_mode):
@@ -400,10 +401,10 @@ def train(epoch_count, batch_size, z_dim, learning_rate, beta1, get_batches, dat
 # ### MNIST
 # 在 MNIST 上测试你的 GANs 模型。经过 2 次迭代，GANs 应该能够生成类似手写数字的图像。确保生成器 (generator) 低于辨别器 (discriminator) 的损失，或接近 0。
 
-# In[187]:
+# In[13]:
 
 
-batch_size = 128
+batch_size = 64
 z_dim = 100
 learning_rate = 0.0002
 beta1 = 0.3
@@ -423,10 +424,10 @@ with tf.Graph().as_default():
 # ### CelebA
 # 在 CelebA 上运行你的 GANs 模型。在一般的GPU上运行每次迭代大约需要 20 分钟。你可以运行整个迭代，或者当 GANs 开始产生真实人脸图像时停止它。
 
-# In[180]:
+# In[14]:
 
 
-batch_size = 128
+batch_size = 64
 z_dim = 100
 learning_rate = 0.0001
 beta1 = 0.3
